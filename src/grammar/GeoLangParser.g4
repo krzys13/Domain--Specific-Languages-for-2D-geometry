@@ -1,37 +1,51 @@
 parser grammar GeoLangParser;
 options { tokenVocab=GeoLangLexer; }
 
-
 program
     : stat* EOF
     ;
 
-stat: ID '=' expr ';'
-    | decl ';'
+stat
+    : decl ';'
+    | expr ';'
     ;
 
-decl: POINT ID '=' point_value
-    | CIRCLE ID '=' circle_value
-    | LINE ID '=' line_value
+decl
+    : (POINT|CIRCLE|LINE) ID '=' geo_type
     ;
 
-expr: ID
+expr
+    : field_access
+    |geo_type
+    | ID
     | FLOAT
+    | '(' expr ')'
     | l=expr op=(MUL|DIV) r=expr
     | l=expr op=(ADD|SUB) r=expr
-    | '(' expr ')'
+    | (ID | field_access) '=' expr
     ;
 
-point_value: '(' expr ',' expr ')'
-    | ID
- ;
-
-circle_value : '(' point_value ',' expr')'
-    | ID
-  ;
-
-line_value : '(' point_value ',' point_value ')'
-    | ID
+field_access
+    : ID (DOT ID)+
     ;
 
 
+geo_type : point_value
+    | circle_value
+    | line_value
+    ;
+
+point_value
+    : '(' expr ',' expr ')'
+    | ID
+    ;
+
+circle_value
+    : '(' point_value ',' expr ')'
+    | ID
+    ;
+
+line_value
+    : '(' point_value ',' point_value ')'
+    | ID
+    ;

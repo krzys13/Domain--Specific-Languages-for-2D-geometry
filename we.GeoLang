@@ -1,0 +1,9 @@
+point a = (10.0,(10));
+point b = (2,3) ;
+point c = a; 
+circle d  = ((a),2);
+line l = (a, b);
+c.x = 10;
+c.y = 5; 
+d.r =10;
+d.s = (1,10) ;
