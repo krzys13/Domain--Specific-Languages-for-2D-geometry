@@ -83,7 +83,7 @@ public class LocalSymbols<T> {
 	 * else it throws exception.
 	 * 
 	 * @param name  Name of the symbol
-	 * @param value Value to put into the symbol
+	 * @param value VarType to put into the symbol
 	 * @return      the value inserted into the symbol
 	 * @throws RuntimeException if symbol is not found
 	 */
