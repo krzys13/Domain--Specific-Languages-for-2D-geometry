@@ -6,64 +6,41 @@ program
     ;
 
 stat
-    : decl ';'
-    | assign ';'
-    | expr ';'
+    : decl ';' #decl_stat
+    | expr ';' #expr_stat
+    | '->' ';' #print_stat
     ;
-
-//==========================
-// DECLARATIONS
-// can be wit assignmnet
-//==========================
 
 decl
-    : geo_type = (POINT|CIRCLE|LINE) ID ('=' geo_value)? #geo_decl
-    | FLOAT ID ('=' expr)*      #flaot_decl
-    ;
-//==========================
-// ASSIGNMENT
-//==========================
-assign
-    : (ID | field_access) '=' (expr| geo_value)
+    : type ID ('=' expr)?
     ;
 
+type
+    :FLOAT
+    |POINT
+    |CIRCLE
+    |LINE
+    ;
 
 expr
-    : field_access
-    | ID
-    | FLOAT
-    | '(' expr ')'
-    | l=expr op=(MUL|DIV) r=expr
-    | l=expr op=(ADD|SUB) r=expr
+    : field_access                    #field_access_expr
+    | tuple                           #tuple_expr
+    | assign                          #assign_expr
+    | ID                              #id_expr
+    | FLOAT                           #float_expr
+    | l=expr op=(MUL|DIV) r=expr      #mul_div_expr
+    | l=expr op=(ADD|SUB) r=expr      #add_sub_expr
+    | '(' expr ')'                    #paren_expr
     ;
-//==========================
-// FIELD ACCESS
-//==========================
+
+assign
+    : (ID | field_access) '=' expr
+    ;
+
+tuple
+    : '(' expr (',' expr)+ ')'
+    ;
+
 field_access
     : ID (DOT ID)+
-    ;
-
-//=========================
-// GEOMETRIC VALUES
-//=========================
-
-geo_value
-    : point_value
-    | circle_value
-    | line_value
-    ;
-
-point_value
-    : '(' expr ',' expr ')'
-    | ID
-    ;
-
-circle_value
-    : '(' point_value ',' expr ')'
-    | ID
-    ;
-
-line_value
-    : '(' point_value ',' point_value ')'
-    | ID
     ;

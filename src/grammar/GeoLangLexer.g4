@@ -24,6 +24,7 @@ RPAREN : ')' ;
 LCURLY : '{' ;
 RCURLY : '}' ;
 DOT : '.' ;
+PRINT : '->';
 
 COMMENT : '/*' .*? '*/' -> channel(HIDDEN) ;
 LINE_COMMENT : '//' ~'\n'* '\n' -> channel(HIDDEN) ;
