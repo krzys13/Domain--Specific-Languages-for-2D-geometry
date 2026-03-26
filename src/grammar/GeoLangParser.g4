@@ -7,30 +7,48 @@ program
 
 stat
     : decl ';'
+    | assign ';'
     | expr ';'
     ;
 
+//==========================
+// DECLARATIONS
+// can be wit assignmnet
+//==========================
+
 decl
-    : (POINT|CIRCLE|LINE) ID '=' geo_type
+    : geo_type = (POINT|CIRCLE|LINE) ID ('=' geo_value)? #geo_decl
+    | FLOAT ID ('=' expr)*      #flaot_decl
     ;
+//==========================
+// ASSIGNMENT
+//==========================
+assign
+    : (ID | field_access) '=' (expr| geo_value)
+    ;
+
 
 expr
     : field_access
-    |geo_type
     | ID
     | FLOAT
     | '(' expr ')'
     | l=expr op=(MUL|DIV) r=expr
     | l=expr op=(ADD|SUB) r=expr
-    | (ID | field_access) '=' expr
     ;
-
+//==========================
+// FIELD ACCESS
+//==========================
 field_access
     : ID (DOT ID)+
     ;
 
+//=========================
+// GEOMETRIC VALUES
+//=========================
 
-geo_type : point_value
+geo_value
+    : point_value
     | circle_value
     | line_value
     ;
