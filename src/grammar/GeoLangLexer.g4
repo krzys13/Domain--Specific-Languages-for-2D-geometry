@@ -4,6 +4,7 @@ lexer grammar GeoLangLexer;
 POINT : 'point' ;
 CIRCLE : 'circle' ;
 LINE : 'line' ;
+FLOAT_TYPE : 'float';
 
 FLOAT : [0-9]+ ('.' [0-9]+)*;
 ID : [a-zA-Z_][a-zA-Z0-9_]* ;

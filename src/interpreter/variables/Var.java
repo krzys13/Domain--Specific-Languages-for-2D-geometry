@@ -1,6 +1,6 @@
 package interpreter.variables;
 
-public interface VarType {
+public interface Var {
     VarTypeEnum getType();
 
 }

@@ -1,6 +1,6 @@
 package interpreter.variables;
 
-public class Circle implements VarType {
+public class Circle implements Var {
 
     private final VarTypeEnum type;
 
@@ -8,7 +8,7 @@ public class Circle implements VarType {
     public float r; // radius
 
     public Circle(Point s, float r) {
-        this.type = VarTypeEnum.CIRCLE
+        this.type = VarTypeEnum.CIRCLE;
         this.s = s;
         this.r = r;
     }
@@ -16,5 +16,10 @@ public class Circle implements VarType {
     @Override
     public VarTypeEnum getType() {
         return this.type;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + s + ", " + r + ")";
     }
 }

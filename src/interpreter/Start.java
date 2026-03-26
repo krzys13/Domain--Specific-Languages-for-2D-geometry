@@ -6,7 +6,7 @@ import org.antlr.v4.runtime.tree.*;
 public class Start {
     public static void main(String[] args) throws Exception {
         // create a CharStream that reads from standard input
-        CharStream input = CharStreams.fromStream(System.in);
+        CharStream input = CharStreams.fromString("point a = (1,1);");
 
         // create a lexer that feeds off of input CharStream
         GeoLangLexer lexer = new GeoLangLexer(input);
