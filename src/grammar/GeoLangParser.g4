@@ -16,7 +16,7 @@ decl
     ;
 
 type
-    :FLOAT
+    :FLOAT_TYPE
     |POINT
     |CIRCLE
     |LINE
@@ -27,9 +27,9 @@ expr
     | tuple                           #tuple_expr
     | assign                          #assign_expr
     | ID                              #id_expr
-    | FLOAT                           #float_expr
-    | l=expr op=(MUL|DIV) r=expr      #mul_div_expr
-    | l=expr op=(ADD|SUB) r=expr      #add_sub_expr
+    | FLOAT                           #float_num_expr
+    | l=expr op=(MUL|DIV) r=expr      #math_expr
+    | l=expr op=(ADD|SUB) r=expr      #math_expr
     | '(' expr ')'                    #paren_expr
     ;
 
