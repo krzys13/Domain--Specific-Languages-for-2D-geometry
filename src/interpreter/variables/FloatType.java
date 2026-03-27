@@ -1,6 +1,6 @@
 package interpreter.variables;
 
-public class FloatType implements Var
+public class FloatType implements VarType
 {
     private final VarTypeEnum type;
     public float value;

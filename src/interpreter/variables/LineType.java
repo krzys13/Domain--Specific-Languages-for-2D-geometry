@@ -1,11 +1,11 @@
 package interpreter.variables;
 
-public class Line implements Var {
+public class LineType implements VarType {
     private final VarTypeEnum type;
 
-    public Point p1, p2;
+    public PointType p1, p2;
 
-    public Line( Point p1, Point p2) {
+    public LineType(PointType p1, PointType p2) {
         this.type = VarTypeEnum.LINE;
         this.p1 = p1;
         this.p2 = p2;
