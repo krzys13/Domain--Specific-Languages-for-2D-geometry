@@ -1,9 +1,9 @@
 lexer grammar GeoLangLexer;
 
 
-POINT : 'point' ;
-CIRCLE : 'circle' ;
-LINE : 'line' ;
+POINT_TYPE : 'point' ;
+CIRCLE_TYPE : 'circle' ;
+LINE_TYPE : 'line' ;
 FLOAT_TYPE : 'float';
 
 FLOAT : [0-9]+ ('.' [0-9]+)*;

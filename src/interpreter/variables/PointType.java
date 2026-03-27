@@ -1,11 +1,11 @@
 package interpreter.variables;
 
-public class Point implements Var {
+public class PointType implements VarType {
 
     private final VarTypeEnum type;
     public FloatType x, y;
 
-    public Point(FloatType x, FloatType y)
+    public PointType(FloatType x, FloatType y)
     {
         this.type = VarTypeEnum.POINT;
         this.x = x;
@@ -21,4 +21,5 @@ public class Point implements Var {
     public String toString() {
         return "(" + x + ", " + y + ")";
     }
+
 }

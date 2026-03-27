@@ -1,13 +1,13 @@
 package interpreter.variables;
 
-public class Circle implements Var {
+public class CircleType implements VarType {
 
     private final VarTypeEnum type;
 
-    public Point s; // center of cirlce
-    public float r; // radius
+    public PointType s; // center of cirlce
+    public FloatType r; // radius
 
-    public Circle(Point s, float r) {
+    public CircleType(PointType s, FloatType r) {
         this.type = VarTypeEnum.CIRCLE;
         this.s = s;
         this.r = r;
