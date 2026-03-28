@@ -38,10 +38,8 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         throw new RuntimeException("Expected CIRCLE, got: " + value.getType());
     }
 
-    @Override
-    public VarType visitPrint_stat(GeoLangParser.Print_statContext ctx) {
-        return super.visitPrint_stat(ctx);
-    }
+
+
 
     @Override
     public VarType visitFloat_decl(GeoLangParser.Float_declContext ctx) {
@@ -73,33 +71,50 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
         System.out.println("LOG:Dodaj do hash mapy " + name + "=" + value);
 
-
         if (varaibleMemory.hasSymbolDepth(name) == null) {
             varaibleMemory.newSymbol(name);
         }
-            varaibleMemory.setSymbol(name, value);
+        varaibleMemory.setSymbol(name, value);
 
         return null;
     }
 
 
+    @Override
+    public VarType visitFloat_assign(GeoLangParser.Float_assignContext ctx) {
+        String name = ctx.ID().getText();
+
+        VarType value = visit(ctx.expr());
+        VarType currentValue = varaibleMemory.getSymbol(name);
+
+        if (currentValue.getType() == value.getType()) { // sprawdzam czy zmienna w pamieci ma ten sam typ co to co chcemy do niej przypsiac
+            varaibleMemory.setSymbol(name, value);
+            return value;
+        } else {
+            throw new RuntimeException(
+                    "Incorrect type assignment: expected " + currentValue.getType() + ", got " + value.getType()
+            );
+        }
+    }
 
 
-//    @Override
-//    public VarType visitMath_expr(GeoLangParser.Math_exprContext ctx) {
-//        Float result;
-//        switch (ctx.op.getType()){
-//            case GeoLangLexer.ADD:
-//                result = new Float(visit(ctx.l).value() +visit(ctx.r).value());
-//
-//            case GeoLangLexer.SUB:
-//            case GeoLangLexer.MUL
-//            case GeoLangLexer.DIV:
-//
-//
-//        }
-//    }
+    @Override
+    public VarType visitGeo_assign(GeoLangParser.Geo_assignContext ctx) {
+        String name = ctx.ID().getText();
 
+        VarType value = visit(ctx.geo_value());
+        VarType currentValue = varaibleMemory.getSymbol(name);
+
+        if(currentValue.getType() == value.getType()) { // sprawdzam czy zmienna w pamieci ma ten sam typ co to co chcemy do niej przypsiac
+            varaibleMemory.setSymbol(name, value);
+            return value;
+        }
+        else {
+            throw new RuntimeException(
+                    "Incorrect type assignment: expected " + currentValue.getType() + ", got " + value.getType()
+            );
+        }
+    }
 
     @Override
     public VarType visitFloat_num_expr(GeoLangParser.Float_num_exprContext ctx) {
