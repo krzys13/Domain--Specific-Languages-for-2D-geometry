@@ -129,6 +129,24 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
             );
         }
     }
+    @Override
+    public VarType visitMath_expr(GeoLangParser.Math_exprContext ctx) {
+        FloatType left = asFloat(visit(ctx.l));
+        FloatType right = asFloat(visit(ctx.r));
+
+        return switch (ctx.op.getType()) {
+            case GeoLangLexer.ADD -> new FloatType(left.value + right.value);
+            case GeoLangLexer.SUB -> new FloatType(left.value - right.value);
+            case GeoLangLexer.MUL -> new FloatType(left.value * right.value);
+            case GeoLangLexer.DIV -> {
+                if (right.value == 0) {
+                    throw new RuntimeException("Division by zero");
+                }
+                yield new FloatType(left.value / right.value);
+            }
+            default -> throw new RuntimeException("Unknown math operator: " + ctx.op.getText());
+        };
+    }
 
     @Override
     public VarType visitFloat_num_expr(GeoLangParser.Float_num_exprContext ctx) {
