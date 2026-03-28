@@ -39,12 +39,30 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     }
 
     @Override
+    public VarType visitPrint_stat(GeoLangParser.Print_statContext ctx) {
+        return super.visitPrint_stat(ctx);
+    }
+
+    @Override
+    public VarType visitFloat_decl(GeoLangParser.Float_declContext ctx) {
+        String name = ctx.ID().getText();
+        VarType value = visit(ctx.expr()); //  zwraca obiekt typu FloatType
+
+        if (varaibleMemory.hasSymbolDepth(name) == null) {
+            varaibleMemory.newSymbol(name);
+        }
+        varaibleMemory.setSymbol(name, value);
+        return null;
+    }
+
+
+    @Override
     public VarType visitGeo_decl(GeoLangParser.Geo_declContext ctx) {
         String name = ctx.ID().getText();
         VarType value;
 
         if (ctx.point_value() != null) {
-            value = visit(ctx.point_value());
+            value = visit(ctx.point_value()); // zostanie zwrocony obeikt typy PoinType
         } else if (ctx.line_value() != null) {
             value = visit(ctx.line_value());
         } else if (ctx.circle_value() != null) {
@@ -55,15 +73,16 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
         System.out.println("LOG:Dodaj do hash mapy " + name + "=" + value);
 
-        // pierwszy warunek sprawdza zakres lokalny a drugi globalny
-        if (!varaibleMemory.hasSymbol(name) || varaibleMemory.hasSymbolDepth(name) == null) {
+
+        if (varaibleMemory.hasSymbolDepth(name) == null) {
             varaibleMemory.newSymbol(name);
-            varaibleMemory.setSymbol(name, value);
-        } else {
-            varaibleMemory.setSymbol(name, value);
         }
+            varaibleMemory.setSymbol(name, value);
+
         return null;
     }
+
+
 
 
 //    @Override
@@ -92,7 +111,6 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
         FloatType left = asFloat(visit(ctx.l));
         FloatType right = asFloat(visit(ctx.r));
-
         return new PointType(left, right);
     }
 
@@ -101,7 +119,6 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     public VarType visitLine_value(GeoLangParser.Line_valueContext ctx) {
         PointType p1 = asPoint(visit(ctx.l));
         PointType p2 = asPoint(visit(ctx.r));
-
         return new LineType(p1, p2);
     }
 
@@ -110,7 +127,6 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     public VarType visitCircle_value(GeoLangParser.Circle_valueContext ctx) {
         PointType s = asPoint(visit(ctx.l));
         FloatType r = asFloat(visit(ctx.r));
-
         return new CircleType(s, r);
 
 
