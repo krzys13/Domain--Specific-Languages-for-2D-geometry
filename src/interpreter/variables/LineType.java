@@ -16,4 +16,9 @@ public class LineType implements VarType {
     public VarTypeEnum getType() {
         return this.type;
     }
+
+    @Override
+    public String toString() {
+        return "(" + p1 + ", " + p2 + ")";
+    }
 }

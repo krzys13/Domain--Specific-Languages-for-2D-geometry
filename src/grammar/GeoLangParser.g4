@@ -7,10 +7,11 @@ program
 
 stat
     : float_decl ';' #float_decl_stat
-    |geo_decl ';' #geo_decl_stat
-    |expr ';' #expr_stat
-    |geo_assign #geo_assign_stat
-    | '->' ';' #print_stat
+    | geo_decl ';' #geo_decl_stat
+    | float_assign ';' #float_assign_stat
+    | geo_assign ';' #geo_assign_stat
+    | expr ';' #expr_stat
+    | '->' (expr | geo_value) ';' #print_stat
     ;
 
 float_decl
@@ -29,7 +30,6 @@ geo_assign
 
 expr
     : field_access                    #field_access_expr
-    | float_assign                    #float_assign_expr
     | ID                              #id_expr
     | FLOAT                           #float_num_expr
     | l=expr op=(MUL|DIV) r=expr      #math_expr

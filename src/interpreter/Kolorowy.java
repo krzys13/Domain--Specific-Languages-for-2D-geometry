@@ -79,6 +79,20 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         return null;
     }
 
+    @Override
+    public VarType visitPrint_stat(GeoLangParser.Print_statContext ctx) {
+        VarType value;
+
+        if (ctx.expr()!= null) {
+            value = visit(ctx.expr());
+        } else {
+            value = visit(ctx.geo_value());
+        }
+
+        System.out.println(value);
+        return value;
+    }
+
 
     @Override
     public VarType visitFloat_assign(GeoLangParser.Float_assignContext ctx) {
