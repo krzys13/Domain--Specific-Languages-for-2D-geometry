@@ -14,7 +14,7 @@ stat
     ;
 
 float_decl
-    : FLOAT_TYPE ID ('=' expr)?
+    : FLOAT_TYPE ID '=' expr
     ;
 geo_decl
     : type = POINT_TYPE ID '=' point_value
