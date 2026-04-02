@@ -31,12 +31,18 @@ public class CircleType implements VarType {
     }
 
     @Override
-    public void setField(String fieldName, VarType value) {
+    public VarType setField(String fieldName, VarType value) {
         switch (fieldName) {
-            case "c": this.c = (PointType) value; break;
-            case "r": this.r = (FloatType) value; break;
+            case "c": return this.c = (PointType) value;
+            case "r": return this.r = (FloatType) value;
             default: throw new RuntimeException("CIRCLE has no field: " + fieldName);
         }
+    }
+
+    @Override
+    public VarType getMethod(String methodName, VarType... args) {
+
+        throw new RuntimeException("CIRCLE has no method: " + methodName);
     }
 
     @Override
