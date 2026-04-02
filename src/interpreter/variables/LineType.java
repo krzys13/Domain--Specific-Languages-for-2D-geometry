@@ -1,5 +1,6 @@
 package interpreter.variables;
 
+
 public class LineType implements VarType {
     private final VarTypeEnum type;
 
@@ -15,6 +16,30 @@ public class LineType implements VarType {
     @Override
     public VarTypeEnum getType() {
         return this.type;
+    }
+
+
+
+
+    @Override
+    public VarType getField(String fieldName) {
+        switch (fieldName) {
+            case "p1":
+                return (this.p1);
+            case "p2":
+                return (this.p2);
+            default:
+                throw new RuntimeException("LINE has no field: " + fieldName);
+        }
+    }
+
+    @Override
+    public void setField(String fieldName, VarType value) {
+        switch (fieldName) {
+            case "p1": this.p1 = (PointType) value; break;
+            case "p2": this.p2 = (PointType) value; break;
+            default: throw new RuntimeException("LINE has no field: " + fieldName);
+        }
     }
 
     @Override

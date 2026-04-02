@@ -1,11 +1,14 @@
-point a = ((10.0),10);
-point b = (2,3) ;
-point c = a;
-point x ;
-circle d  = (a,(2));
-line l = (a, b);
-c.x = 10;
-c.y = 5; 
-d.r =10;
-d.s = (1,10);
-a = (10*10,10) +45;
+-> 8*8;
+point a = (1,1);
+line l = (a,(8,2));
+circle c =(a,7+7);
+->a;
+->l;
+->c;
+
+point b = a;
+-> b;
+
+a=b;
+->a;
+->a.x;
