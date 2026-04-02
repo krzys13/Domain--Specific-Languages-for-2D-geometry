@@ -21,8 +21,13 @@ public class FloatType implements VarType
     }
 
     @Override
-    public void setField(String fieldName, VarType value) {
+    public VarType setField(String fieldName, VarType value) {
         throw new RuntimeException("FLOAT has no fields");
+    }
+
+    @Override
+    public VarType getMethod(String methodName, VarType... args) {
+        throw new RuntimeException("FLOAT has no method: " + methodName);
     }
 
     @Override

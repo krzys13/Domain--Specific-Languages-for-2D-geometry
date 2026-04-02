@@ -24,6 +24,7 @@ expr
     | l=expr op=(MUL|DIV) r=expr      #math_expr
     | l=expr op=(ADD|SUB) r=expr      #math_expr
     | '(' expr ')'                    #paren_expr
+    | method                          #method_expr
     ;
 
 assign:
@@ -49,6 +50,11 @@ value
 
 field
     : ID (DOT ID)+
+    ;
+
+method
+    :
+    ID (DOT ID)* '(' (expr (',' expr)*)? ')'
     ;
 
 geo_value

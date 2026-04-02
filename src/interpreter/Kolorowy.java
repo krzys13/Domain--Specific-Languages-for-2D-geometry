@@ -5,6 +5,7 @@ import grammar.GeoLangLexer;
 import grammar.GeoLangParser;
 import grammar.GeoLangParserBaseVisitor;
 import interpreter.variables.*;
+import java.util.*;
 
 class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
@@ -117,7 +118,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
             }
 
             String lastField = field.ID(field.ID().size() - 1).getText();
-            VarType current = obj.getField(lastField);
+            VarType current = obj.getField(lastField);//current value
 
             if (current.getType() != value.getType()) {
                 throw new RuntimeException(
@@ -176,7 +177,22 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         else return visit(ctx.geo_value());
     }
 
+    @Override
+    public VarType visitMethod(GeoLangParser.MethodContext ctx) {
+         String baseName = ctx.ID(0).getText();
+         String methodName = ctx.ID().getLast().getText();
+        VarType[] visitedArgs = ctx.expr().stream()
+                .map(this::visit)
+                .toArray(VarType[]::new);
+         VarType currentObj = variableMemory.getSymbol(baseName);
 
+         // navigate to parent of method
+         for ( int i = 1; i < ctx.ID().size()-1; i++){
+             currentObj = currentObj.getField(ctx.ID(i).getText());
+         }
+         return (currentObj.getMethod(methodName,visitedArgs));
+
+    }
 
     @Override
     public VarType visitPoint_value(GeoLangParser.Point_valueContext ctx) {
@@ -218,6 +234,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         String baseName = ctx.ID(0).getText();
         VarType currentObj = variableMemory.getSymbol(baseName);
 
+        // navigate to the parent of the last field
         for (int i = 1; i <ctx.ID().size(); i++){
             currentObj =currentObj.getField(ctx.ID(i).getText());
         }
