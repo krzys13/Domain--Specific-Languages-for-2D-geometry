@@ -11,3 +11,4 @@ point b = a;
 
 a=b;
 ->a;
+->a.x;

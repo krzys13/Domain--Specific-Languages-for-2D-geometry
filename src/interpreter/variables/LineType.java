@@ -18,6 +18,21 @@ public class LineType implements VarType {
         return this.type;
     }
 
+
+
+
+    @Override
+    public VarType getField(String name) {
+        switch (name) {
+            case "p1":
+                return (this.p1);
+            case "p2":
+                return (this.p2);
+            default:
+                throw new RuntimeException("LINE has no field: " + name);
+        }
+    }
+
     @Override
     public String toString() {
         return "(" + p1 + ", " + p2 + ")";

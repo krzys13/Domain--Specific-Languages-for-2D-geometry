@@ -124,10 +124,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         return value;
     }
 
-    @Override
-    public VarType visitField_expr(GeoLangParser.Field_exprContext ctx) {
-        throw new RuntimeException("Field access not implemented yet");
-    }
+
 
     @Override
     public VarType visitMath_expr(GeoLangParser.Math_exprContext ctx) {
@@ -195,5 +192,14 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         return new CircleType(center, radius);
     }
 
+    @Override
+    public VarType visitField(GeoLangParser.FieldContext ctx) {
+        String baseName = ctx.ID(0).getText();
+        VarType currentObject = variableMemory.getSymbol(baseName);
 
+        for (int i = 1; i <ctx.ID().size(); i++){
+            currentObject =currentObject.getField(ctx.ID(i).getText());
+        }
+        return currentObject;
+    }
 }

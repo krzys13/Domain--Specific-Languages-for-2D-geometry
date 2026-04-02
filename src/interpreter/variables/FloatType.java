@@ -16,6 +16,11 @@ public class FloatType implements VarType
     }
 
     @Override
+    public VarType getField(String name) {
+        return null;
+    }
+
+    @Override
     public String toString() {
         return Float.toString(value);
     }
