@@ -1,14 +1,14 @@
 package interpreter;
 
-
 import SymbolTable.LocalSymbols;
-import grammar.*;
+import grammar.GeoLangLexer;
+import grammar.GeoLangParser;
+import grammar.GeoLangParserBaseVisitor;
 import interpreter.variables.*;
-
 
 class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
-    final private LocalSymbols<VarType> varaibleMemory = new LocalSymbols<>();
+    private final LocalSymbols<VarType> variableMemory = new LocalSymbols<>();
 
     private FloatType asFloat(VarType value) {
         if (value instanceof FloatType f) {
@@ -38,97 +38,115 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         throw new RuntimeException("Expected CIRCLE, got: " + value.getType());
     }
 
-
-
-
-    @Override
-    public VarType visitFloat_decl(GeoLangParser.Float_declContext ctx) {
-        String name = ctx.ID().getText();
-        VarType value = visit(ctx.expr()); //  zwraca obiekt typu FloatType
-
-        if (varaibleMemory.hasSymbolDepth(name) == null) {
-            varaibleMemory.newSymbol(name);
-        }
-        varaibleMemory.setSymbol(name, value);
-        return null;
+    private VarTypeEnum mapType(String type) {
+        return switch (type) {
+            case "float" -> VarTypeEnum.FLOAT;
+            case "point" -> VarTypeEnum.POINT;
+            case "line" -> VarTypeEnum.LINE;
+            case "circle" -> VarTypeEnum.CIRCLE;
+            default -> throw new RuntimeException("Unknown type: " + type);
+        };
     }
 
-
     @Override
-    public VarType visitGeo_decl(GeoLangParser.Geo_declContext ctx) {
+    public VarType visitDecl(GeoLangParser.DeclContext ctx) {
         String name = ctx.ID().getText();
+        VarTypeEnum declaredType = mapType(ctx.type().getText());
+
+        if (variableMemory.hasSymbolDepth(name) != null) {
+            throw new RuntimeException("Variable already declared: " + name);
+        }
+
         VarType value;
 
-        if (ctx.point_value() != null) {
-            value = visit(ctx.point_value()); // zostanie zwrocony obeikt typy PoinType
-        } else if (ctx.line_value() != null) {
-            value = visit(ctx.line_value());
-        } else if (ctx.circle_value() != null) {
-            value = visit(ctx.circle_value());
+        if (ctx.expr() != null) {
+            value = visit(ctx.expr());
+
+            if (value.getType() != declaredType) {
+                throw new RuntimeException(
+                        "Type mismatch for variable " + name +
+                                ": expected " + declaredType +
+                                ", got " + value.getType()
+                );
+            }
         } else {
-            throw new RuntimeException("Unknown geo declaration");
+            if (declaredType == VarTypeEnum.FLOAT) {
+                value = new FloatType(0.0f);
+            } else {
+                throw new RuntimeException("Variable " + name + " must be initialized");
+            }
         }
 
-        System.out.println("LOG:Dodaj do hash mapy " + name + "=" + value);
-
-        if (varaibleMemory.hasSymbolDepth(name) == null) {
-            varaibleMemory.newSymbol(name);
-        }
-        varaibleMemory.setSymbol(name, value);
-
-        return null;
+        variableMemory.newSymbol(name);
+        variableMemory.setSymbol(name, value);
+        return value;
     }
 
     @Override
     public VarType visitPrint_stat(GeoLangParser.Print_statContext ctx) {
-        VarType value;
+        VarType value = visit(ctx.expr());
+        System.out.println(value);
+        return value;
+    }
 
-        if (ctx.expr()!= null) {
-            value = visit(ctx.expr());
+    @Override
+    public VarType visitAssign(GeoLangParser.AssignContext ctx) {
+        VarType value = visit(ctx.expr());
+
+        if (ctx.ID() != null) {
+            String name = ctx.ID().getText();
+            VarType current = variableMemory.getSymbol(name);
+
+            if (current.getType() != value.getType()) {
+                throw new RuntimeException(
+                        "Incorrect type assignment: expected " +
+                                current.getType() + ", got " + value.getType()
+                );
+            }
+
+            variableMemory.setSymbol(name, value);
         } else {
-            value = visit(ctx.geo_value());
+            // field assignment, e.g. p.x = 5.0
+            GeoLangParser.FieldContext field = ctx.field();
+            String baseName = field.ID(0).getText();
+            VarType obj = variableMemory.getSymbol(baseName);
+
+            // navigate to the parent of the last field
+            for (int i = 1; i < field.ID().size() - 1; i++) {
+                obj = obj.getField(field.ID(i).getText());
+            }
+
+            String lastField = field.ID(field.ID().size() - 1).getText();
+            VarType current = obj.getField(lastField);
+
+            if (current.getType() != value.getType()) {
+                throw new RuntimeException(
+                        "Incorrect type assignment: expected " +
+                                current.getType() + ", got " + value.getType()
+                );
+            }
+
+            obj.setField(lastField, value);
         }
 
-        System.out.println(value);
         return value;
     }
 
 
     @Override
-    public VarType visitFloat_assign(GeoLangParser.Float_assignContext ctx) {
+    public VarType visitId_expr(GeoLangParser.Id_exprContext ctx) {
         String name = ctx.ID().getText();
+        VarType value = variableMemory.getSymbol(name);
 
-        VarType value = visit(ctx.expr());
-        VarType currentValue = varaibleMemory.getSymbol(name);
-
-        if (currentValue.getType() == value.getType()) { // sprawdzam czy zmienna w pamieci ma ten sam typ co to co chcemy do niej przypsiac
-            varaibleMemory.setSymbol(name, value);
-            return value;
-        } else {
-            throw new RuntimeException(
-                    "Incorrect type assignment: expected " + currentValue.getType() + ", got " + value.getType()
-            );
+        if (value == null) {
+            throw new RuntimeException("Undeclared variable: " + name);
         }
+
+        return value;
     }
 
 
-    @Override
-    public VarType visitGeo_assign(GeoLangParser.Geo_assignContext ctx) {
-        String name = ctx.ID().getText();
 
-        VarType value = visit(ctx.geo_value());
-        VarType currentValue = varaibleMemory.getSymbol(name);
-
-        if(currentValue.getType() == value.getType()) { // sprawdzam czy zmienna w pamieci ma ten sam typ co to co chcemy do niej przypsiac
-            varaibleMemory.setSymbol(name, value);
-            return value;
-        }
-        else {
-            throw new RuntimeException(
-                    "Incorrect type assignment: expected " + currentValue.getType() + ", got " + value.getType()
-            );
-        }
-    }
     @Override
     public VarType visitMath_expr(GeoLangParser.Math_exprContext ctx) {
         FloatType left = asFloat(visit(ctx.l));
@@ -148,18 +166,37 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         };
     }
 
-    @Override
-    public VarType visitFloat_num_expr(GeoLangParser.Float_num_exprContext ctx) {
-        return new FloatType(Float.parseFloat(ctx.FLOAT().getText()));
+
+
+
+
+    @Override public VarType visitValue(GeoLangParser.ValueContext ctx) {
+        if (ctx.FLOAT_VALUE() != null)
+            return new FloatType(Float.parseFloat(ctx.FLOAT_VALUE().getText()));
+        else return visit(ctx.geo_value());
     }
+
+
 
     @Override
     public VarType visitPoint_value(GeoLangParser.Point_valueContext ctx) {
-
         FloatType left = asFloat(visit(ctx.l));
         FloatType right = asFloat(visit(ctx.r));
         return new PointType(left, right);
     }
+
+
+    @Override
+    public VarType visitPoint_ref(GeoLangParser.Point_refContext ctx) {
+        if (ctx.ID() != null) {
+            String name = ctx.ID().getText();
+            VarType value = asPoint(variableMemory.getSymbol(name));
+            return value;
+        }
+
+        return visit(ctx.point_value());
+    }
+
 
 
     @Override
@@ -169,22 +206,21 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         return new LineType(p1, p2);
     }
 
-
     @Override
     public VarType visitCircle_value(GeoLangParser.Circle_valueContext ctx) {
-        PointType s = asPoint(visit(ctx.l));
-        FloatType r = asFloat(visit(ctx.r));
-        return new CircleType(s, r);
-
-
+        PointType center = asPoint(visit(ctx.l));
+        FloatType radius = asFloat(visit(ctx.r));
+        return new CircleType(center, radius);
     }
-
 
     @Override
-    public VarType visitId_expr(GeoLangParser.Id_exprContext ctx) {
-        String name = ctx.ID().getText(); // nazwa zmiennej
-        VarType value = varaibleMemory.getSymbol(name);
-        return value;
+    public VarType visitField(GeoLangParser.FieldContext ctx) {
+        String baseName = ctx.ID(0).getText();
+        VarType currentObj = variableMemory.getSymbol(baseName);
+
+        for (int i = 1; i <ctx.ID().size(); i++){
+            currentObj =currentObj.getField(ctx.ID(i).getText());
+        }
+        return currentObj;
     }
 }
-

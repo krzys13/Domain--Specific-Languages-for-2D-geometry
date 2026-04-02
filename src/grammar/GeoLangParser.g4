@@ -6,50 +6,34 @@ program
     ;
 
 stat
-    : float_decl ';' #float_decl_stat
-    | geo_decl ';' #geo_decl_stat
-    | float_assign ';' #float_assign_stat
-    | geo_assign ';' #geo_assign_stat
+    : decl ';' #decl_stat
     | expr ';' #expr_stat
     | '->' (expr | geo_value) ';' #print_stat
     ;
 
-float_decl
-    : FLOAT_TYPE ID '=' expr
-    ;
-geo_decl
-    : type = POINT_TYPE ID '=' point_value
-    | type = LINE_TYPE ID '=' line_value
-    | type = CIRCLE_TYPE ID '=' circle_value
-    ;
-
-geo_assign
-    : (ID | field_access) '=' geo_value
+decl
+    : type ID ('=' expr)?
     ;
 
 
 expr
-    : field_access                    #field_access_expr
+    : field                           #field_expr
+    | assign                          #assign_expr
     | ID                              #id_expr
-    | FLOAT                           #float_num_expr
+    | value                           #value_expr
     | l=expr op=(MUL|DIV) r=expr      #math_expr
     | l=expr op=(ADD|SUB) r=expr      #math_expr
     | '(' expr ')'                    #paren_expr
     ;
 
-float_assign
-    : (ID | field_access) '=' expr
+assign:
+    (ID|field) '=' expr
     ;
 
 
-field_access
-    : ID (DOT ID)+
-    ;
-
-geo_value
-    : point_value
-    | line_value
-    | circle_value
+type
+    :FLOAT_TYPE
+    |geo_type
     ;
 
 geo_type
@@ -58,12 +42,33 @@ geo_type
     |LINE_TYPE
     ;
 
+value
+    :FLOAT_VALUE
+    |geo_value
+    ;
+
+field
+    : ID (DOT ID)+
+    ;
+
+geo_value
+    : line_value
+    | circle_value
+    | point_value
+    ;
+
 point_value
     : '(' l = expr ',' r = expr ')'
     ;
+
+point_ref
+    : point_value
+    | ID
+    ;
+
 line_value
-    : '(' l = point_value ',' r = point_value ')'
+    : '(' l = point_ref ',' r = point_ref ')'
     ;
 circle_value
-    : '(' l = point_value ',' r = expr ')'
+    : '(' l = point_ref ',' r = expr ')'
     ;
