@@ -30,12 +30,23 @@ public class PointType implements VarType {
     }
 
     @Override
-    public void setField(String fieldName, VarType value) {
+    public VarType setField(String fieldName, VarType value) {
         switch (fieldName) {
-            case "x": this.x = (FloatType) value; break;
-            case "y": this.y = (FloatType) value; break;
+            case "x": return this.x = (FloatType) value;
+            case "y": return this.y = (FloatType) value;
             default: throw new RuntimeException("POINT has no field: " + fieldName);
         }
+    }
+
+    @Override
+    public VarType getMethod(String methodName, VarType... args) {
+        return switch (methodName) {
+            case "move" -> {
+                this.x = new FloatType(7);
+                yield this;
+            }
+            default -> throw new RuntimeException("POINT has no method: " + methodName);
+        };
     }
 
     @Override

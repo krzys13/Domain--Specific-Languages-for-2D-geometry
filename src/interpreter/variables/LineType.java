@@ -34,12 +34,17 @@ public class LineType implements VarType {
     }
 
     @Override
-    public void setField(String fieldName, VarType value) {
+    public VarType setField(String fieldName, VarType value) {
         switch (fieldName) {
-            case "p1": this.p1 = (PointType) value; break;
-            case "p2": this.p2 = (PointType) value; break;
+            case "p1": return this.p1 = (PointType) value;
+            case "p2": return this.p2 = (PointType) value;
             default: throw new RuntimeException("LINE has no field: " + fieldName);
         }
+    }
+
+    @Override
+    public VarType getMethod(String methodName, VarType... args) {
+        throw new RuntimeException("LINE has no method: " + methodName);
     }
 
     @Override
