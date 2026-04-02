@@ -1,5 +1,6 @@
 package interpreter.variables;
 
+
 public class LineType implements VarType {
     private final VarTypeEnum type;
 

@@ -27,7 +27,7 @@ expr
     ;
 
 assign:
-    (ID|field) '=' value
+    (ID|field) '=' expr
     ;
 
 
@@ -52,17 +52,23 @@ field
     ;
 
 geo_value
-    : point_value
-    | line_value
+    : line_value
     | circle_value
+    | point_value
     ;
 
 point_value
     : '(' l = expr ',' r = expr ')'
     ;
+
+point_ref
+    : point_value
+    | ID
+    ;
+
 line_value
-    : '(' l = point_value ',' r = point_value ')'
+    : '(' l = point_ref ',' r = point_ref ')'
     ;
 circle_value
-    : '(' l = point_value ',' r = expr ')'
+    : '(' l = point_ref ',' r = expr ')'
     ;
