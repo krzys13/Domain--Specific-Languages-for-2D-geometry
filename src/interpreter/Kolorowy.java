@@ -91,23 +91,44 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
     @Override
     public VarType visitAssign(GeoLangParser.AssignContext ctx) {
-
-        String name = ctx.ID().getText();
         VarType value = visit(ctx.expr());
 
-        VarType current = variableMemory.getSymbol(name);
-        if (current == null) {
-            throw new RuntimeException("Undeclared variable: " + name);
+        if (ctx.ID() != null) {
+            String name = ctx.ID().getText();
+            VarType current = variableMemory.getSymbol(name);
+
+            if (current.getType() != value.getType()) {
+                throw new RuntimeException(
+                        "Incorrect type assignment: expected " +
+                                current.getType() + ", got " + value.getType()
+                );
+            }
+
+            variableMemory.setSymbol(name, value);
+        } else {
+            // field assignment, e.g. p.x = 5.0
+            GeoLangParser.FieldContext field = ctx.field();
+            String baseName = field.ID(0).getText();
+            VarType obj = variableMemory.getSymbol(baseName);
+
+            // navigate to the parent of the last field
+            for (int i = 1; i < field.ID().size() - 1; i++) {
+                obj = obj.getField(field.ID(i).getText());
+            }
+
+            String lastField = field.ID(field.ID().size() - 1).getText();
+            VarType current = obj.getField(lastField);
+
+            if (current.getType() != value.getType()) {
+                throw new RuntimeException(
+                        "Incorrect type assignment: expected " +
+                                current.getType() + ", got " + value.getType()
+                );
+            }
+
+            obj.setField(lastField, value);
         }
 
-        if (current.getType() != value.getType()) {
-            throw new RuntimeException(
-                    "Incorrect type assignment: expected " +
-                            current.getType() + ", got " + value.getType()
-            );
-        }
-
-        variableMemory.setSymbol(name, value);
         return value;
     }
 
@@ -195,11 +216,11 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     @Override
     public VarType visitField(GeoLangParser.FieldContext ctx) {
         String baseName = ctx.ID(0).getText();
-        VarType currentObject = variableMemory.getSymbol(baseName);
+        VarType currentObj = variableMemory.getSymbol(baseName);
 
         for (int i = 1; i <ctx.ID().size(); i++){
-            currentObject =currentObject.getField(ctx.ID(i).getText());
+            currentObj =currentObj.getField(ctx.ID(i).getText());
         }
-        return currentObject;
+        return currentObj;
     }
 }
