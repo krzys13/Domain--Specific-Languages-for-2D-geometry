@@ -240,4 +240,8 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         }
         return currentObj;
     }
+
+    public Map<String, VarType> getAllVariables() {
+        return variableMemory.getGlobalScope();
+    }
 }
