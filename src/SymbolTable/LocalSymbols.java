@@ -3,6 +3,7 @@ package SymbolTable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.Map;
 
 public class LocalSymbols<T> {
 	
@@ -112,6 +113,10 @@ public class LocalSymbols<T> {
 		}
 		else
 			throw new RuntimeException("Variable " + name +" does not exist!");
+	}
+
+	public Map<String, T> getGlobalScope() {
+		return memory.getLast(); // ponieważ globalny zakres był pierwszy i jest na dole
 	}
 	
 }
