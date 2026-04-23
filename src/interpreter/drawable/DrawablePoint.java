@@ -13,7 +13,6 @@ public class DrawablePoint implements Drawable {
 
     @Override
     public void draw(GraphicsContext gc) {
-        gc.setFill(Color.BLACK);
         gc.fillOval(x - SIZE/2, y - SIZE/2, SIZE, SIZE);
     }
 }
