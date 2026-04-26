@@ -41,6 +41,7 @@ public class DrawingApp extends Application {
     private static double minY = Double.POSITIVE_INFINITY;
     private static double maxY = Double.NEGATIVE_INFINITY;
     private boolean isDarkMode = false;
+    private TextArea errorConsole;
 
     public static void setFigures(List<Drawable> figs) {
         figures = figs;
@@ -86,49 +87,26 @@ public class DrawingApp extends Application {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(10));
 
-        // --- PASEK NARZĘDZI NA GÓRZE ---
+        // --- Pasek narzędzi na górze ---
         HBox toolbar = new HBox(10);
-        toolbar.setPadding(new Insets(0, 0, 10, 0)); // Odstęp pod paskiem
+        toolbar.setPadding(new Insets(0, 0, 10, 0));
 
         Button clearButton = new Button("Wyczyść");
-        Button exampleButton = new Button("Przykład");
-        Button saveButton = new Button("Zapisz PNG");
-        Button colorModeButton = new Button("Dark/Light");
+        clearButton.setId("btn-clear");
 
-        // Stylowanie przycisków (opcjonalnie)
-        saveButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
-        clearButton.setStyle("-fx-background-color: #f44336; -fx-text-fill: white;");
-        clearButton.setStyle("-fx-background-color: #68476d; -fx-text-fill: white;");
+        Button exampleButton = new Button("Przykład");
+        exampleButton.setId("btn-example");
+
+        Button saveButton = new Button("Zapisz PNG");
+        saveButton.setId("btn-save");
+
+        Button colorModeButton = new Button("Dark/Light");
+        colorModeButton.setId("btn-mode");
+
 
         toolbar.getChildren().addAll(exampleButton, clearButton, saveButton,  colorModeButton);
-        root.setTop(toolbar); // Umieszczamy pasek na górze
+        root.setTop(toolbar);
 
-        // --- AKCJE DLA PRZYCISKÓW ---
-
-        // 1. Wyczyść
-        clearButton.setOnAction(e -> {
-            codeInput.clear();
-//            errorConsole.clear();
-            figures.clear();
-            draw(canvas.getGraphicsContext2D());
-        });
-
-        // 2. Przykładowe dane
-        exampleButton.setOnAction(e -> {
-            codeInput.setText(
-                    "point a = (100, 100);\n" +
-                    "point b = (300, 300);\n" +
-                    "point d = (500, 200);\n" +
-                    "line l = (a, b);\n" +
-                    "circle c1 = (d, 50);\n" +
-                    "circle c2 = (d, 100);\n"
-            );
-        });
-
-        // 3. Zapisz do PNG
-        saveButton.setOnAction(e -> saveToPng(primaryStage));
-
-        colorModeButton.setOnAction(e -> changeMode());
 
         // --- Lewa strona: Panel do wpisywania poleceń ---
         VBox controls = new VBox(10);
@@ -138,22 +116,57 @@ public class DrawingApp extends Application {
         codeInput.setPrefHeight(500);
 
         Button runButton = new Button("Uruchom i Rysuj");
+        runButton.setId("btn-run");
         runButton.setMaxWidth(Double.MAX_VALUE);
-        runButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold;");
-
         runButton.setOnAction(e -> processCode(codeInput.getText()));
 
-        controls.getChildren().addAll(codeInput, runButton);
+        errorConsole = new TextArea();
+        errorConsole.setEditable(false);
+        errorConsole.setPrefHeight(150);
+        errorConsole.setId("error-console");
+
+        controls.getChildren().addAll(codeInput, runButton, errorConsole);
         root.setLeft(controls);
 
         // --- Prawa strona: Płótno ---
         canvas = new Canvas(800, 600);
         root.setCenter(canvas);
 
+
+        // --- Akcje dla przycisków ---
+
+        // 1. Wyczyść
+        clearButton.setOnAction(e -> {
+            codeInput.clear();
+            errorConsole.clear();
+            figures.clear();
+            draw(canvas.getGraphicsContext2D());
+        });
+
+        // 2. Przykładowe dane
+        exampleButton.setOnAction(e -> {
+            codeInput.setText(
+                    "point a = (100, 100);\n" +
+                            "point b = (300, 300);\n" +
+                            "point d = (500, 200);\n" +
+                            "line l = (a, b);\n" +
+                            "circle c1 = (d, 50);\n" +
+                            "circle c2 = (d, 100);\n"
+            );
+        });
+
+        // 3. Zapisz do PNG
+        saveButton.setOnAction(e -> saveToPng(primaryStage));
+
+        // 4. Zmiana trybu jasny/ciemny
+        colorModeButton.setOnAction(e -> changeMode());
+
         // Inicjalne czyszczenie tła
         draw(canvas.getGraphicsContext2D());
 
-        Scene scene = new Scene(root, 1150, 650);
+        Scene scene = new Scene(root, 1200, 700);
+        scene.getStylesheets().add(getClass().getResource("/resources/style.css").toExternalForm());
+        root.getStyleClass().add("root-light");
         primaryStage.setTitle("GeoLang Interactive Viewer");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -167,27 +180,23 @@ public class DrawingApp extends Application {
         alert.showAndWait();
     }
     private void changeMode() {
-        isDarkMode = !isDarkMode; // Przełączamy tryb
-
-        // Pobieramy główny kontener (root) z sceny
+        isDarkMode = !isDarkMode;
         BorderPane root = (BorderPane) canvas.getScene().getRoot();
 
+        root.getStyleClass().removeAll("root-dark", "root-light");
         if (isDarkMode) {
-            // Styl Ciemny
-            root.setStyle("-fx-background-color: #2b2b2b;");
-            codeInput.setStyle("-fx-control-inner-background: #3c3f41; -fx-text-fill: #a9b7c6;");
-//            errorConsole.setStyle("-fx-control-inner-background: #3c3f41; -fx-text-fill: #ff6b68;");
+            root.getStyleClass().add("root-dark");
         } else {
-            // Styl Jasny
-            root.setStyle("-fx-background-color: #f4f4f4;");
-            codeInput.setStyle("-fx-control-inner-background: white; -fx-text-fill: black;");
-//            errorConsole.setStyle("-fx-control-inner-background: white; -fx-text-fill: red;");
+            root.getStyleClass().add("root-light");
         }
 
-        // NAJWAŻNIEJSZE: Przerysuj Canvas w nowym trybie
         draw(canvas.getGraphicsContext2D());
     }
+
     private void processCode(String code) {
+        errorConsole.clear();
+        figures.clear();
+
         try {
             // 1. Parsowanie kodu z TextArea
             CharStream input = CharStreams.fromString(code);
@@ -196,7 +205,7 @@ public class DrawingApp extends Application {
             GeoLangParser parser = new GeoLangParser(tokens);
 
             parser.removeErrorListeners();
-            parser.addErrorListener(new DescriptiveErrorListener());
+            parser.addErrorListener(new DescriptiveErrorListener(errorConsole));
 
             ParseTree tree = parser.program();
 
@@ -212,9 +221,7 @@ public class DrawingApp extends Application {
             draw(canvas.getGraphicsContext2D());
 
         } catch (Exception e) {
-            System.err.println("Błąd interpretacji: " + e.getMessage());
-            // Tu można by dodać okno z błędem dla użytkownika
-        }
+            errorConsole.appendText("Błąd interpretacji: " + e.getMessage() + "\n");        }
     }
 
     private void draw(GraphicsContext gc) {
@@ -224,16 +231,18 @@ public class DrawingApp extends Application {
         // Czyścimy tło
         gc.clearRect(0, 0, width, height);
         if (isDarkMode) {
-            gc.setFill(Color.valueOf("#1e1e1e")); // Ciemne tło canvasu
+            gc.setFill(Color.valueOf("#1e1e1e"));
         } else {
-            gc.setFill(Color.WHITE); // Jasne tło canvasu
+            gc.setFill(Color.WHITE);
         }
         gc.fillRect(0, 0, width, height);
+
+        drawGrid(gc, width, height, 50);
 
         // Stan rysowania (reset transformacji)
         gc.save();
 
-        // Odwrócenie osi Y – (0,0) lewy dolny róg (zgodnie z kodem kolegi)
+        // Odwrócenie osi Y – (0,0) lewy dolny róg
         gc.translate(0, height);
         gc.scale(1, -1);
 
@@ -252,7 +261,7 @@ public class DrawingApp extends Application {
             }
         }
 
-        gc.restore(); // Przywracamy stan, żeby UI nie zwariowało
+        gc.restore(); // Przywracamy stan
     }
 
     // Opcjonalna metoda do automatycznego dopasowania widoku
@@ -282,13 +291,11 @@ public class DrawingApp extends Application {
         java.io.File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try {
-                // Robimy zdjęcie canvasu
                 javafx.scene.image.WritableImage writableImage = new javafx.scene.image.WritableImage(
                         (int) canvas.getWidth(), (int) canvas.getHeight()
                 );
                 canvas.snapshot(null, writableImage);
 
-                // Zapisujemy do pliku
                 javafx.embed.swing.SwingFXUtils.fromFXImage(writableImage, null);
                 javax.imageio.ImageIO.write(
                         javafx.embed.swing.SwingFXUtils.fromFXImage(writableImage, null),
@@ -299,8 +306,39 @@ public class DrawingApp extends Application {
                 showInfoDialog("Obraz został pomyślnie zapisany!");
             } catch (java.io.IOException ex) {
 
-//                errorConsole.appendText("Błąd zapisu pliku: " + ex.getMessage() + "\n");
+                errorConsole.appendText("Błąd zapisu pliku: " + ex.getMessage() + "\n");
             }
         }
+    }
+    private void drawGrid(GraphicsContext gc, double width, double height, int spacing) {
+        gc.save();
+
+        if (isDarkMode) {
+            gc.setStroke(Color.web("#333333"));
+            gc.setFill(Color.web("#777777"));
+        } else {
+            gc.setStroke(Color.web("#E0E0E0"));
+            gc.setFill(Color.web("#AAAAAA"));
+        }
+
+        gc.setLineWidth(1.0);
+        gc.setFont(new javafx.scene.text.Font("Arial", 10));
+
+        for (int x = 0; x <= width; x += spacing) {
+            gc.strokeLine(x, 0, x, height);
+            if (x > 0) {
+                gc.fillText(String.valueOf(x), x + 2, height - 2);
+            }
+        }
+
+        for (int y = 0; y <= height; y += spacing) {
+            gc.strokeLine(0, y, width, y);
+            if (y > 0) {
+                int mathY = (int) (height - y);
+                gc.fillText(String.valueOf(mathY), 2, y - 2);
+            }
+        }
+
+        gc.restore();
     }
 }
