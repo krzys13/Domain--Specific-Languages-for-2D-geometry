@@ -146,12 +146,14 @@ public class DrawingApp extends Application {
         // 2. Przykładowe dane
         exampleButton.setOnAction(e -> {
             codeInput.setText(
-                    "point a = (100, 100);\n" +
-                            "point b = (300, 300);\n" +
-                            "point d = (500, 200);\n" +
-                            "line l = (a, b);\n" +
-                            "circle c1 = (d, 50);\n" +
-                            "circle c2 = (d, 100);\n"
+                    """
+                            point a = (100, 100);
+                            point b = (300, 300);
+                            point d = (500, 200);
+                            line l = (a, b);
+                            circle c1 = (d, 50);
+                            circle c2 = (d, 100);
+                            """
             );
         });
 
@@ -215,7 +217,7 @@ public class DrawingApp extends Application {
 
             // 3. Konwersja na figury (używamy metody ze Start.java)
             Map<String, VarType> variables = visitor.getAllVariables();
-            this.figures = convertToDrawables(variables);
+            figures = convertToDrawables(variables);
 
             // 4. Odświeżenie Canvasu
             draw(canvas.getGraphicsContext2D());
