@@ -11,6 +11,18 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
     private final LocalSymbols<VarType> variableMemory = new LocalSymbols<>();
 
+    private VarType getDeclaredVariable(String name) {
+        return variableMemory.getSymbol(name);
+    }
+
+    private VarType getInitializedVariable(String name) {
+        VarType value = getDeclaredVariable(name);
+        if (value instanceof UninitializedVarType) {
+            throw new RuntimeException("Variable not initialized: " + name);
+        }
+        return value;
+    }
+
     private FloatType asFloat(VarType value) {
         if (value instanceof FloatType f) {
             return f;
@@ -71,11 +83,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
                 );
             }
         } else {
-            if (declaredType == VarTypeEnum.FLOAT) {
-                value = new FloatType(0.0f);
-            } else {
-                throw new RuntimeException("Variable " + name + " must be initialized");
-            }
+            value = new UninitializedVarType(declaredType);
         }
 
         variableMemory.newSymbol(name);
@@ -96,7 +104,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
-            VarType current = variableMemory.getSymbol(name);
+            VarType current = getDeclaredVariable(name);
 
             if (current.getType() != value.getType()) {
                 throw new RuntimeException(
@@ -110,7 +118,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
             // field assignment, e.g. p.x = 5.0
             GeoLangParser.FieldContext field = ctx.field();
             String baseName = field.ID(0).getText();
-            VarType obj = variableMemory.getSymbol(baseName);
+            VarType obj = getInitializedVariable(baseName);
 
             // navigate to the parent of the last field
             for (int i = 1; i < field.ID().size() - 1; i++) {
@@ -137,13 +145,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     @Override
     public VarType visitId_expr(GeoLangParser.Id_exprContext ctx) {
         String name = ctx.ID().getText();
-        VarType value = variableMemory.getSymbol(name);
-
-        if (value == null) {
-            throw new RuntimeException("Undeclared variable: " + name);
-        }
-
-        return value;
+        return getInitializedVariable(name);
     }
 
 
@@ -184,7 +186,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         VarType[] visitedArgs = ctx.expr().stream()
                 .map(this::visit)
                 .toArray(VarType[]::new);
-         VarType currentObj = variableMemory.getSymbol(baseName);
+         VarType currentObj = getInitializedVariable(baseName);
 
          // navigate to parent of method
          for ( int i = 1; i < ctx.ID().size()-1; i++){
@@ -206,7 +208,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     public VarType visitPoint_ref(GeoLangParser.Point_refContext ctx) {
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
-            VarType value = asPoint(variableMemory.getSymbol(name));
+            VarType value = asPoint(getInitializedVariable(name));
             return value;
         }
 
@@ -232,7 +234,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     @Override
     public VarType visitField(GeoLangParser.FieldContext ctx) {
         String baseName = ctx.ID(0).getText();
-        VarType currentObj = variableMemory.getSymbol(baseName);
+        VarType currentObj = getInitializedVariable(baseName);
 
         // navigate to the parent of the last field
         for (int i = 1; i <ctx.ID().size(); i++){
