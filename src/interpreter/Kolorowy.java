@@ -10,6 +10,8 @@ import java.util.*;
 class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
     private final LocalSymbols<VarType> variableMemory = new LocalSymbols<>();
+    private final Map<String, FunctionDef> functions = new HashMap<>();
+    private final Deque<String> callStack = new ArrayDeque<>();
 
     private VarType getDeclaredVariable(String name) {
         return variableMemory.getSymbol(name);
@@ -48,6 +50,10 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
                 );
             }
         };
+    }
+
+    private VarTypeEnum mapContextType(GeoLangParser.TypeContext ctx) {
+        return mapType(ctx.getText());
     }
 
     private FloatType asFloat(VarType value) {
@@ -89,6 +95,23 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     }
 
     @Override
+    public VarType visitProgram(GeoLangParser.ProgramContext ctx) {
+        for (GeoLangParser.StatContext statContext : ctx.stat()) {
+            if (statContext instanceof GeoLangParser.Func_def_statContext funcDefStatContext) {
+                visit(funcDefStatContext.func_def());
+            }
+        }
+
+        VarType lastValue = null;
+        for (GeoLangParser.StatContext statContext : ctx.stat()) {
+            if (!(statContext instanceof GeoLangParser.Func_def_statContext)) {
+                lastValue = visit(statContext);
+            }
+        }
+        return lastValue;
+    }
+
+    @Override
     public VarType visitDecl(GeoLangParser.DeclContext ctx) {
         String name = ctx.ID().getText();
         VarTypeEnum declaredType = mapType(ctx.type().getText());
@@ -123,6 +146,38 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         VarType value = visit(ctx.expr());
         System.out.println(value);
         return value;
+    }
+
+    @Override
+    public VarType visitFunc_def(GeoLangParser.Func_defContext ctx) {
+        String name = ctx.ID().getText();
+        if (!callStack.isEmpty()) {
+            throw new RuntimeException("Function definitions inside functions are not allowed: " + name);
+        }
+        if (functions.containsKey(name)) {
+            throw new RuntimeException("Function already declared: " + name);
+        }
+
+        List<VarTypeEnum> paramTypes = new ArrayList<>();
+        List<String> paramNames = new ArrayList<>();
+        if (ctx.param_list() != null) {
+            for (GeoLangParser.ParamContext paramCtx : ctx.param_list().param()) {
+                String paramName = paramCtx.ID().getText();
+                if (paramNames.contains(paramName)) {
+                    throw new RuntimeException("Duplicate parameter name: " + paramName);
+                }
+                paramNames.add(paramName);
+                paramTypes.add(mapContextType(paramCtx.type()));
+            }
+        }
+
+        functions.put(name, new FunctionDef(
+                mapContextType(ctx.type()),
+                paramTypes,
+                paramNames,
+                ctx.block()
+        ));
+        return null;
     }
 
     @Override
@@ -196,6 +251,12 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         };
     }
 
+    @Override
+    public VarType visitUnary_minus_expr(GeoLangParser.Unary_minus_exprContext ctx) {
+        FloatType value = asFloat(visit(ctx.expr()));
+        return new FloatType(-value.value);
+    }
+
 
 
 
@@ -224,6 +285,75 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     }
 
     @Override
+    public VarType visitFunc_call(GeoLangParser.Func_callContext ctx) {
+        String functionName = ctx.ID().getText();
+        FunctionDef function = functions.get(functionName);
+
+        if (function == null) {
+            throw new RuntimeException("Unknown function: " + functionName);
+        }
+        if (callStack.contains(functionName)) {
+            throw new RuntimeException("Recursion is not allowed: " + functionName);
+        }
+        if (ctx.expr().size() != function.paramTypes().size()) {
+            throw new RuntimeException("Function " + functionName + " expects " +
+                    function.paramTypes().size() + " arguments, got " + ctx.expr().size());
+        }
+
+        List<VarType> arguments = new ArrayList<>();
+        for (int i = 0; i < ctx.expr().size(); i++) {
+            VarType argument = deepCopy(visit(ctx.expr(i)));
+            VarTypeEnum expectedType = function.paramTypes().get(i);
+            if (argument.getType() != expectedType) {
+                throw new RuntimeException("Type mismatch for argument " + (i + 1) +
+                        " in function " + functionName + ": expected " + expectedType +
+                        ", got " + argument.getType());
+            }
+            arguments.add(argument);
+        }
+
+        callStack.push(functionName);
+        variableMemory.enterScope();
+        try {
+            for (int i = 0; i < arguments.size(); i++) {
+                String paramName = function.paramNames().get(i);
+                variableMemory.newSymbol(paramName);
+                variableMemory.setSymbol(paramName, arguments.get(i));
+            }
+
+            visit(function.body());
+        } catch (ReturnSignal signal) {
+            if (signal.value().getType() != function.returnType()) {
+                throw new RuntimeException("Function " + functionName + " should return " +
+                        function.returnType() + ", got " + signal.value().getType());
+            }
+            return deepCopy(signal.value());
+        } finally {
+            variableMemory.leaveScope();
+            callStack.pop();
+        }
+
+        throw new RuntimeException("Function " + functionName + " must return a value");
+    }
+
+    @Override
+    public VarType visitBlock(GeoLangParser.BlockContext ctx) {
+        VarType lastValue = null;
+        for (GeoLangParser.StatContext statContext : ctx.stat()) {
+            lastValue = visit(statContext);
+        }
+        return lastValue;
+    }
+
+    @Override
+    public VarType visitReturn_stat(GeoLangParser.Return_statContext ctx) {
+        if (callStack.isEmpty()) {
+            throw new RuntimeException("return outside of function");
+        }
+        throw new ReturnSignal(deepCopy(visit(ctx.expr())));
+    }
+
+    @Override
     public VarType visitPoint_value(GeoLangParser.Point_valueContext ctx) {
         FloatType left = asFloat(visit(ctx.l));
         FloatType right = asFloat(visit(ctx.r));
@@ -235,7 +365,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
     public VarType visitPoint_ref(GeoLangParser.Point_refContext ctx) {
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
-            VarType value = asPoint(getInitializedVariable(name));
+            VarType value = deepCopy(asPoint(getInitializedVariable(name)));
             return value;
         }
 
