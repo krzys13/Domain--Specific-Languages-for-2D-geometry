@@ -3,13 +3,7 @@ package interpreter;
 import grammar.GeoLangLexer;
 import grammar.GeoLangParser;
 import interpreter.drawable.Drawable;
-import interpreter.drawable.DrawableCircle;
-import interpreter.drawable.DrawableLine;
-import interpreter.drawable.DrawablePoint;
-import interpreter.variables.CircleType;
-import interpreter.variables.LineType;
-import interpreter.variables.PointType;
-import interpreter.variables.VarType;
+import interpreter.drawable.DrawCollector;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -30,7 +24,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DrawingApp extends Application {
     private static List<Drawable> figures = new ArrayList<>();
@@ -52,34 +45,6 @@ public class DrawingApp extends Application {
         // Dla uproszczenia zakładamy, że każdy Drawable potrafi podać swoje granice
         // (można rozszerzyć interfejs Drawable o metodę bounds())
         // Tutaj pomijam – w zaawansowanej wersji można dodać.
-    }
-
-    private static List<Drawable> convertToDrawables(Map<String, VarType> variables) {
-        List<Drawable> drawables = new ArrayList<>();
-        for (VarType var : variables.values()) {
-            switch (var.getType()) {
-                case POINT -> {
-                    PointType p = (PointType) var;
-                    drawables.add(new DrawablePoint(p.x.value, p.y.value));
-                }
-                case LINE -> {
-                    LineType l = (LineType) var;
-                    drawables.add(new DrawableLine(
-                            l.p1.x.value, l.p1.y.value,
-                            l.p2.x.value, l.p2.y.value
-                    ));
-                }
-                case CIRCLE -> {
-                    CircleType c = (CircleType) var;
-                    drawables.add(new DrawableCircle(
-                            c.c.x.value, c.c.y.value,
-                            c.r.value
-                    ));
-                }
-                // FLOAT ignorujemy
-            }
-        }
-        return drawables;
     }
 
     @Override
@@ -139,6 +104,7 @@ public class DrawingApp extends Application {
         clearButton.setOnAction(e -> {
             codeInput.clear();
             errorConsole.clear();
+            DrawCollector.clear();
             figures.clear();
             draw(canvas.getGraphicsContext2D());
         });
@@ -197,6 +163,7 @@ public class DrawingApp extends Application {
 
     private void processCode(String code) {
         errorConsole.clear();
+        DrawCollector.clear();
         figures.clear();
 
         try {
@@ -215,9 +182,8 @@ public class DrawingApp extends Application {
             Kolorowy visitor = new Kolorowy();
             visitor.visit(tree);
 
-            // 3. Konwersja na figury (używamy metody ze Start.java)
-            Map<String, VarType> variables = visitor.getAllVariables();
-            figures = convertToDrawables(variables);
+            // 3. Pobranie figur jawnie wyrenderowanych przez render()
+            figures = new ArrayList<>(DrawCollector.getDrawables());
 
             // 4. Odświeżenie Canvasu
             draw(canvas.getGraphicsContext2D());
