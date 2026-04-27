@@ -15,6 +15,27 @@ public class LineType implements VarType {
 
     }
 
+    private static PointType rotatePoint(PointType point, PointType pivot, float angleDegrees) {
+        double angleRadians = Math.toRadians(angleDegrees);
+        double translatedX = point.x.value - pivot.x.value;
+        double translatedY = point.y.value - pivot.y.value;
+
+        double rotatedX = translatedX * Math.cos(angleRadians) - translatedY * Math.sin(angleRadians);
+        double rotatedY = translatedX * Math.sin(angleRadians) + translatedY * Math.cos(angleRadians);
+
+        return new PointType(
+                new FloatType((float) (rotatedX + pivot.x.value)),
+                new FloatType((float) (rotatedY + pivot.y.value))
+        );
+    }
+
+    private PointType getCenter() {
+        return new PointType(
+                new FloatType((this.p1.x.value + this.p2.x.value) / 2.0f),
+                new FloatType((this.p1.y.value + this.p2.y.value) / 2.0f)
+        );
+    }
+
     @Override
     public VarTypeEnum getType() {
         return this.type;
@@ -46,13 +67,52 @@ public class LineType implements VarType {
 
     @Override
     public VarType getMethod(String methodName, VarType... args) {
-        if ("render".equals(methodName)) {
-            DrawCollector.add(new DrawableLine(
-                    this.p1.x.value, this.p1.y.value,
-                    this.p2.x.value, this.p2.y.value));
-            return this;
-        }
-        throw new RuntimeException("LINE has no method: " + methodName);
+        return switch (methodName) {
+            case "render" -> {
+                DrawCollector.add(new DrawableLine(
+                        this.p1.x.value, this.p1.y.value,
+                        this.p2.x.value, this.p2.y.value));
+                yield this;
+            }
+            case "move" -> {
+                if (args.length != 2) {
+                    throw new RuntimeException("LINE.move expects 2 arguments");
+                }
+                if (!(args[0] instanceof FloatType dx) || !(args[1] instanceof FloatType dy)) {
+                    throw new RuntimeException("LINE.move expects FLOAT, FLOAT arguments");
+                }
+                this.p1 = new PointType(
+                        new FloatType(this.p1.x.value + dx.value),
+                        new FloatType(this.p1.y.value + dy.value)
+                );
+                this.p2 = new PointType(
+                        new FloatType(this.p2.x.value + dx.value),
+                        new FloatType(this.p2.y.value + dy.value)
+                );
+                yield this;
+            }
+            case "rotate" -> {
+                if (args.length != 1 && args.length != 2) {
+                    throw new RuntimeException("LINE.rotate expects 1 or 2 arguments");
+                }
+                if (!(args[0] instanceof FloatType angle)) {
+                    throw new RuntimeException("LINE.rotate expects FLOAT angle as first argument");
+                }
+                PointType pivot;
+                if (args.length == 2) {
+                    if (!(args[1] instanceof PointType point)) {
+                        throw new RuntimeException("LINE.rotate expects POINT as second argument");
+                    }
+                    pivot = point;
+                } else {
+                    pivot = getCenter();
+                }
+                this.p1 = rotatePoint(this.p1, pivot, angle.value);
+                this.p2 = rotatePoint(this.p2, pivot, angle.value);
+                yield this;
+            }
+            default -> throw new RuntimeException("LINE has no method: " + methodName);
+        };
     }
 
     @Override
