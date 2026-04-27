@@ -1,5 +1,7 @@
 package interpreter.variables;
 
+import interpreter.drawable.DrawCollector;
+import interpreter.drawable.DrawableLine;
 
 public class LineType implements VarType {
     private final VarTypeEnum type;
@@ -44,6 +46,12 @@ public class LineType implements VarType {
 
     @Override
     public VarType getMethod(String methodName, VarType... args) {
+        if ("render".equals(methodName)) {
+            DrawCollector.add(new DrawableLine(
+                    this.p1.x.value, this.p1.y.value,
+                    this.p2.x.value, this.p2.y.value));
+            return this;
+        }
         throw new RuntimeException("LINE has no method: " + methodName);
     }
 
