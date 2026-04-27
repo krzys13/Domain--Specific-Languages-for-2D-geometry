@@ -43,13 +43,20 @@ public class PointType implements VarType {
 
     @Override
     public VarType getMethod(String methodName, VarType... args) {
-        if ("render".equals(methodName)) {
-            DrawCollector.add(new DrawablePoint(this.x.value, this.y.value));
-            return this;
-        }
         return switch (methodName) {
+            case "render" -> {
+                DrawCollector.add(new DrawablePoint(this.x.value, this.y.value));
+                yield this;
+            }
             case "move" -> {
-                this.x = new FloatType(7);
+                if (args.length != 2) {
+                    throw new RuntimeException("POINT.move expects 2 arguments");
+                }
+                if (!(args[0] instanceof FloatType dx) || !(args[1] instanceof FloatType dy)) {
+                    throw new RuntimeException("POINT.move expects FLOAT, FLOAT arguments");
+                }
+                this.x = new FloatType(this.x.value + dx.value);
+                this.y = new FloatType(this.y.value + dy.value);
                 yield this;
             }
             default -> throw new RuntimeException("POINT has no method: " + methodName);

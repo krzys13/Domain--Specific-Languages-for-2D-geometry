@@ -23,6 +23,33 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         return value;
     }
 
+    private VarType deepCopy(VarType value) {
+        return switch (value.getType()) {
+            case FLOAT -> new FloatType(asFloat(value).value);
+            case POINT -> {
+                PointType point = asPoint(value);
+                yield new PointType(
+                        (FloatType) deepCopy(point.x),
+                        (FloatType) deepCopy(point.y)
+                );
+            }
+            case LINE -> {
+                LineType line = asLine(value);
+                yield new LineType(
+                        (PointType) deepCopy(line.p1),
+                        (PointType) deepCopy(line.p2)
+                );
+            }
+            case CIRCLE -> {
+                CircleType circle = asCircle(value);
+                yield new CircleType(
+                        (PointType) deepCopy(circle.c),
+                        (FloatType) deepCopy(circle.r)
+                );
+            }
+        };
+    }
+
     private FloatType asFloat(VarType value) {
         if (value instanceof FloatType f) {
             return f;
@@ -73,7 +100,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
         VarType value;
 
         if (ctx.expr() != null) {
-            value = visit(ctx.expr());
+            value = deepCopy(visit(ctx.expr()));
 
             if (value.getType() != declaredType) {
                 throw new RuntimeException(
@@ -100,7 +127,7 @@ class Kolorowy extends GeoLangParserBaseVisitor<VarType> {
 
     @Override
     public VarType visitAssign(GeoLangParser.AssignContext ctx) {
-        VarType value = visit(ctx.expr());
+        VarType value = deepCopy(visit(ctx.expr()));
 
         if (ctx.ID() != null) {
             String name = ctx.ID().getText();
