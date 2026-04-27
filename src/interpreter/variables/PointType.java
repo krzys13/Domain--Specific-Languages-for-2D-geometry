@@ -1,5 +1,8 @@
 package interpreter.variables;
 
+import interpreter.drawable.DrawCollector;
+import interpreter.drawable.DrawablePoint;
+
 public class PointType implements VarType {
 
     private final VarTypeEnum type;
@@ -40,6 +43,10 @@ public class PointType implements VarType {
 
     @Override
     public VarType getMethod(String methodName, VarType... args) {
+        if ("render".equals(methodName)) {
+            DrawCollector.add(new DrawablePoint(this.x.value, this.y.value));
+            return this;
+        }
         return switch (methodName) {
             case "move" -> {
                 this.x = new FloatType(7);

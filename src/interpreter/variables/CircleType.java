@@ -1,5 +1,8 @@
 package interpreter.variables;
 
+import interpreter.drawable.DrawCollector;
+import interpreter.drawable.DrawableCircle;
+
 public class CircleType implements VarType {
 
     private final VarTypeEnum type;
@@ -41,7 +44,11 @@ public class CircleType implements VarType {
 
     @Override
     public VarType getMethod(String methodName, VarType... args) {
-
+        if ("render".equals(methodName)) {
+            DrawCollector.add(new DrawableCircle(
+                    this.c.x.value, this.c.y.value, this.r.value));
+            return this; // zwracamy siebie, aby mozna bylo lancuchowac
+        }
         throw new RuntimeException("CIRCLE has no method: " + methodName);
     }
 
